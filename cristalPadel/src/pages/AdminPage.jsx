@@ -75,27 +75,27 @@ export default function AdminPage() {
   }
 }
 
-  return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-32">
-      <AdminHeader />
-      <AdminDateSelector date={date} onChangeDate={setDate} />
-      <AdminGrid
-  grid={grid}
-  loading={loading}
-  onCancel={handleCancel}
-  onPick={setSelected}
-/>
-<ConfirmModal
-  open={Boolean(selected)}
-  onClose={() => setSelected(null)}
-  onConfirm={handleCreateBooking}
-  subtitle={
-    selected
-      ? `Cancha ${selected.court} • ${date} • ${selected.startTime}`
-      : ""
-  }
-/>
-      <AdminBottomNav />
-    </div>
-  );
+return (
+  <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-32">
+    <AdminHeader />
+    <AdminDateSelector date={date} onChangeDate={setDate} />
+    <AdminGrid
+      grid={grid}
+      loading={loading}
+      onCancel={handleCancel}
+      onPick={setSelected}
+    />
+    <ConfirmModal
+      open={Boolean(selected)}
+      onClose={() => setSelected(null)}
+      onConfirm={handleCreateBooking}
+      subtitle={
+        selected
+          ? `Cancha ${selected.court} • ${date} • ${selected.startTime}`
+          : ""
+      }
+    />
+    <AdminBottomNav />
+  </div>
+);
 }
