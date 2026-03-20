@@ -7,7 +7,7 @@ export default function BookingHeader({ date, onChangeDate }) {
           <>
       <header className="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-primary/10">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary text-3xl">
+          <span className="material-symbols-outlined text-primary text-3xl" translate="no">
             sports_tennis
           </span>
           <h2 className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">

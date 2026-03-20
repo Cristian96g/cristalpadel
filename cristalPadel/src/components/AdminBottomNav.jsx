@@ -4,7 +4,7 @@ export default function AdminBottomNav() {
       <div className="flex items-center justify-between max-w-md mx-auto">
         <a className="flex flex-col items-center gap-1 text-primary" href="#">
           <span
-            className="material-symbols-outlined"
+            className="material-symbols-outlined" translate="no"
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
             calendar_month
@@ -15,21 +15,21 @@ export default function AdminBottomNav() {
         </a>
 
         <a className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined">grid_view</span>
+          <span className="material-symbols-outlined" translate="no">grid_view</span>
           <p className="text-[10px] font-bold uppercase tracking-widest">
             Canchas
           </p>
         </a>
 
         <a className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined">group</span>
+          <span className="material-symbols-outlined" translate="no">group</span>
           <p className="text-[10px] font-bold uppercase tracking-widest">
             Socios
           </p>
         </a>
 
         <a className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined">settings</span>
+          <span className="material-symbols-outlined" translate="no">settings</span>
           <p className="text-[10px] font-bold uppercase tracking-widest">
             Ajustes
           </p>

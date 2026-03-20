@@ -7,7 +7,7 @@ export default function AdminSlotRow({ slot, onCancel, onPick }) {
   return (
     <div className="flex gap-4">
       <div className="w-16 flex items-start justify-center pt-2">
-        <span className="text-sm font-bold text-slate-500">{slot.time}</span>
+        <span className="text-sm font-bold text-slate-500" translate="no">{slot.time}</span>
       </div>
 
       <SlotCard

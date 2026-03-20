@@ -50,3 +50,7 @@ details:not([open]) .expanded-content {
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 body { font-family: "Lexend", sans-serif; }
+
+.notranslate {
+  translate: no;
+}

@@ -66,7 +66,7 @@ function DayButton({ item, active, onClick }) {
         {getDayLabel(item)}
       </span>
 
-      <span className="text-2xl font-bold leading-none mt-1">
+      <span className="text-2xl font-bold leading-none mt-1" translate="no">
         {Number(day)}
       </span>
     </button>
@@ -92,7 +92,7 @@ export default function DaySelector({ selectedDate, onSelectDate }) {
             onClick={() => moveDay(-1)}
             className="p-2 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-400"
           >
-            <span className="material-symbols-outlined">chevron_left</span>
+            <span className="material-symbols-outlined" translate="no">chevron_left</span>
           </button>
 
           <div className="text-center">
@@ -108,7 +108,7 @@ export default function DaySelector({ selectedDate, onSelectDate }) {
             onClick={() => moveDay(1)}
             className="p-2 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-400"
           >
-            <span className="material-symbols-outlined">chevron_right</span>
+            <span className="material-symbols-outlined" translate="no">chevron_right</span>
           </button>
         </div>
 

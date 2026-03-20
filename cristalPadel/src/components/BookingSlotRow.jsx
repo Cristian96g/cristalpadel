@@ -7,7 +7,7 @@ export default function BookingSlotRow({ slot, onPick }) {
   return (
     <div className="flex gap-4">
       <div className="w-16 flex items-start justify-center pt-2">
-        <span className="text-sm font-bold text-slate-500">
+        <span className="text-sm font-bold text-slate-500" translate="no">
           {slot.startTime}
         </span>
       </div>
