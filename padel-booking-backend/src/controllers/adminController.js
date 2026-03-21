@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js";
 import { generateStartTimes } from "../utils/slots.js";
 import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
+import { getIO } from "../socket.js";
 
 function isPastSlot(date, startTime) {
   const [y, m, d] = date.split("-").map(Number);
@@ -120,12 +121,21 @@ export async function cancelAdminBooking(req, res) {
       }
     );
 
+    const io = getIO();
+
+    io.emit("booking:cancelled", {
+      bookingId: updatedBooking._id,
+      date: updatedBooking.date,
+      startTime: updatedBooking.startTime,
+      court: updatedBooking.court,
+      cancelledAt: updatedBooking.cancelledAt,
+    });
+
     return res.json({
       message: "Reserva cancelada correctamente",
       booking: updatedBooking,
     });
   } catch (error) {
-    // console.error("cancel booking error:", error);
     console.error("cancel booking error FULL:", error);
     return res.status(500).json({ message: "Server error" });
   }

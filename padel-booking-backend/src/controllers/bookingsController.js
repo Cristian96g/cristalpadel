@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js";
 import { generateStartTimes } from "../utils/slots.js";
 import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
+import { getIO } from "../socket.js";
 
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
@@ -35,7 +36,7 @@ export async function createBooking(req, res) {
     if (String(lastName).trim().length < 3) {
       return res.status(400).json({ message: "Invalid last name" });
     }
-    
+
     if (String(phone).trim().length < 6) {
       return res.status(400).json({ message: "Invalid phone" });
     }
@@ -59,10 +60,23 @@ export async function createBooking(req, res) {
       startTime,
       court: courtNum,
       name: String(name).trim(),
-      lastName: String(lastName).trim(),
+      lastName: lastName ? String(lastName).trim() : "",
       phone: String(phone).trim(),
       status: "confirmed",
       isBlock: false,
+    });
+
+    const io = getIO();
+
+    io.emit("booking:created", {
+      bookingId: booking._id,
+      date: booking.date,
+      startTime: booking.startTime,
+      court: booking.court,
+      name: booking.name,
+      lastName: booking.lastName || "",
+      phone: booking.phone,
+      createdAt: booking.createdAt,
     });
 
     return res.status(201).json({ booking });
