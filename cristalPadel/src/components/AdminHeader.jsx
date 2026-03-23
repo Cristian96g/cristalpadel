@@ -4,6 +4,7 @@ export default function AdminHeader({
   unreadCount = 0,
   notifications = [],
   onOpenNotifications,
+  onNotificationClick,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -88,21 +89,23 @@ export default function AdminHeader({
             ) : (
               <div className="space-y-2">
                 {notifications.map((notification) => (
-                  <div
+                  <button
                     key={notification.id}
-                    className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm"
+                    type="button"
+                    onClick={() => {
+                      onNotificationClick?.(notification);
+                      setOpen(false);
+                    }}
+                    className="w-full text-left rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     <p className="font-semibold">{notification.message}</p>
                     <p className="text-xs text-slate-500 mt-1">
-                      {new Date(notification.createdAt).toLocaleTimeString(
-                        "es-AR",
-                        {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )}
+                      {new Date(notification.createdAt).toLocaleTimeString("es-AR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

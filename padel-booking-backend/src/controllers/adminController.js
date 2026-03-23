@@ -50,9 +50,13 @@ export async function getAdminGrid(req, res) {
                 status: "booked",
                 booking: {
                   _id: court1._id,
-                  name: court1.name,
-                  phone: court1.phone,
+                  name: court1.name || "",
+                  lastName: court1.lastName || "",
+                  phone: court1.phone || "",
                   status: court1.status,
+                  date: court1.date,
+                  startTime: court1.startTime,
+                  court: court1.court,
                 },
               }
             : {
@@ -67,9 +71,13 @@ export async function getAdminGrid(req, res) {
                 status: "booked",
                 booking: {
                   _id: court2._id,
-                  name: court2.name,
-                  phone: court2.phone,
+                  name: court2.name || "",
+                  lastName: court2.lastName || "",
+                  phone: court2.phone || "",
                   status: court2.status,
+                  date: court2.date,
+                  startTime: court2.startTime,
+                  court: court2.court,
                 },
               }
             : {

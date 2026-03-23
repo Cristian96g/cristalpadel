@@ -1,6 +1,13 @@
 import AdminSlotRow from "./AdminSlotRow.jsx";
 
-export default function AdminGrid({ grid, loading, onCancel, onPick }) {
+export default function AdminGrid({
+  grid,
+  loading,
+  onCancel,
+  onPick,
+  onOpenBooking,
+  highlightedBookingId,
+}) {
   if (loading) {
     return <p className="px-4">Cargando reservas...</p>;
   }
@@ -26,8 +33,9 @@ export default function AdminGrid({ grid, loading, onCancel, onPick }) {
           <AdminSlotRow
             key={slot.time}
             slot={slot}
-            onCancel={onCancel}
             onPick={onPick}
+            onOpenBooking={onOpenBooking}
+            highlightedBookingId={highlightedBookingId}
           />
         ))}
       </div>

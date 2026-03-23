@@ -21,6 +21,13 @@ const BookingSchema = new mongoose.Schema(
 
     cancelledAt: { type: Date, default: null },
     cancelReason: { type: String, default: null },
+
+     // 👇 ACA VA (importante)
+    fixedBookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FixedBooking",
+      default: null,
+    },
   },
   { timestamps: true }
 );

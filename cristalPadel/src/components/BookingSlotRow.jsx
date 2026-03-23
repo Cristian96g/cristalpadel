@@ -7,13 +7,14 @@ export default function BookingSlotRow({ slot, onPick }) {
   return (
     <div className="flex gap-4">
       <div className="w-16 flex items-start justify-center pt-2">
-        <span className="text-sm font-bold text-slate-500" translate="no">
+        <span className="text-sm font-bold text-slate-500">
           {slot.startTime}
         </span>
       </div>
 
       <SlotCard
         status={court1?.status}
+        booking={court1?.booking}
         clickable={court1?.status === "available"}
         onPick={
           court1?.status === "available"
@@ -29,6 +30,7 @@ export default function BookingSlotRow({ slot, onPick }) {
 
       <SlotCard
         status={court2?.status}
+        booking={court2?.booking}
         clickable={court2?.status === "available"}
         onPick={
           court2?.status === "available"

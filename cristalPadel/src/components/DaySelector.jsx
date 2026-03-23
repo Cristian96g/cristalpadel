@@ -58,6 +58,7 @@ function DayButton({ item, active, onClick }) {
       ].join(" ")}
     >
       <span
+      translate="no"
         className={[
           "text-[10px] font-semibold uppercase tracking-wider",
           active ? "text-white/80" : "text-slate-400",

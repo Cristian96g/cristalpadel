@@ -7,6 +7,7 @@ import { Server } from "socket.io";
 
 
 import { applyDnsFix } from "./config/dnsFix.js";
+import fixedBookingsRouter from "./routes/fixedBookingsRoutes.js";
 import availabilityRouter from "./routes/availabilityRoutes.js";
 import bookingsRouter from "./routes/bookingsRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
@@ -43,7 +44,7 @@ app.use(
 );
 
 app.get("/health", (req, res) => res.json({ ok: true }));
-
+app.use("/api/fixed-bookings", fixedBookingsRouter);
 app.use("/api/availability", availabilityRouter);
 app.use("/api/bookings", bookingsRouter);
 app.use("/api/admin", adminRouter);

@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { createBooking } from "../api/bookings.js";
+import { createFixedBooking } from "../api/fixedBookings.js";
 import ConfirmModal from "../components/ConfirmModal.jsx";
 import { getAdminGrid, cancelAdminBooking } from "../api/adminBookings.js";
 import AdminHeader from "../components/AdminHeader.jsx";
 import AdminDateSelector from "../components/AdminDateSelector.jsx";
 import AdminGrid from "../components/AdminGrid.jsx";
 import AdminBottomNav from "../components/AdminBottomNav.jsx";
+import AdminActions from "../components/AdminActions.jsx";
+import FixedBookingModal from "../components/FixedBookingModal.jsx";
+import BookingActionsModal from "../components/BookingActionsModal.jsx";
 import { socket } from "../lib/socket.js";
 
 function pad2(n) {
@@ -17,6 +21,27 @@ function todayISO() {
   return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
 }
 
+function formatDateNice(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d); // ✅ LOCAL
+
+  const dias = [
+    "domingo",
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+  ];
+
+  const diaSemana = dias[date.getDay()];
+  const dia = String(date.getDate()).padStart(2, "0");
+  const mes = String(date.getMonth() + 1).padStart(2, "0");
+
+  return `${diaSemana} ${dia}/${mes}`;
+}
+
 export default function AdminPage() {
   const [selected, setSelected] = useState(null);
   const [date, setDate] = useState(todayISO());
@@ -24,6 +49,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [fixedModalOpen, setFixedModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [highlightedBookingId, setHighlightedBookingId] = useState(null);
 
   async function loadGrid() {
     setLoading(true);
@@ -47,7 +75,7 @@ export default function AdminPage() {
         {
           id: `created-${payload.bookingId}-${Date.now()}`,
           type: "created",
-          message: `Nueva reserva: Cancha ${payload.court} · ${payload.date} · ${payload.startTime}`,
+          message: `Nueva reserva para el ${formatDateNice(payload.date)} a las ${payload.startTime} · Cancha ${payload.court}`,
           payload,
           createdAt: new Date().toISOString(),
         },
@@ -66,7 +94,7 @@ export default function AdminPage() {
         {
           id: `cancelled-${payload.bookingId}-${Date.now()}`,
           type: "cancelled",
-          message: `Reserva cancelada: Cancha ${payload.court} · ${payload.date} · ${payload.startTime}`,
+          message: `Reserva cancelada para el ${formatDateNice(payload.date)} a las ${payload.startTime} · Cancha ${payload.court}`,
           payload,
           createdAt: new Date().toISOString(),
         },
@@ -126,21 +154,56 @@ export default function AdminPage() {
     }
   }
 
+  async function handleCreateFixedBooking(payload) {
+    try {
+      await createFixedBooking(payload);
+      await loadGrid();
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error?.data?.message || error.message || "No se pudo crear el turno fijo",
+      };
+    }
+  }
+
+  function handleNotificationClick(notification) {
+    if (!notification?.payload) return;
+
+    const { date: notificationDate, bookingId } = notification.payload;
+
+    if (notificationDate) {
+      setDate(notificationDate);
+    }
+
+    if (bookingId) {
+      setHighlightedBookingId(bookingId);
+
+      setTimeout(() => {
+        setHighlightedBookingId(null);
+      }, 4000);
+    }
+  }
+
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-32">
       <AdminHeader
         unreadCount={unreadCount}
         notifications={notifications}
         onOpenNotifications={() => setUnreadCount(0)}
+        onNotificationClick={handleNotificationClick}
       />
 
       <AdminDateSelector date={date} onChangeDate={setDate} />
 
+      <AdminActions onOpenFixedBooking={() => setFixedModalOpen(true)} />
+
       <AdminGrid
         grid={grid}
         loading={loading}
-        onCancel={handleCancel}
         onPick={setSelected}
+        onOpenBooking={setSelectedBooking}
+        highlightedBookingId={highlightedBookingId}
       />
 
       <ConfirmModal
@@ -154,7 +217,19 @@ export default function AdminPage() {
         }
       />
 
+      <FixedBookingModal
+        open={fixedModalOpen}
+        onClose={() => setFixedModalOpen(false)}
+        onSubmit={handleCreateFixedBooking}
+      />
+
       <AdminBottomNav />
+      <BookingActionsModal
+        open={Boolean(selectedBooking)}
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+        onCancel={handleCancel}
+      />
     </div>
   );
 }
