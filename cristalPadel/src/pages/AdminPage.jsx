@@ -117,18 +117,15 @@ export default function AdminPage() {
     };
   }, [date]);
 
-  async function handleCancel(id) {
-    const ok = window.confirm("¿Seguro que querés cancelar esta reserva?");
-    if (!ok) return;
-
-    try {
-      await cancelAdminBooking(id, "Cancelado por admin");
-      await loadGrid();
-    } catch (error) {
-      console.error("cancel error:", error);
-      alert("No se pudo cancelar la reserva");
-    }
+async function handleCancel(id) {
+  try {
+    await cancelAdminBooking(id, "Cancelado por admin");
+    await loadGrid();
+  } catch (error) {
+    console.error("cancel error:", error);
+    alert("No se pudo cancelar la reserva");
   }
+}
 
   async function handleCreateBooking({ name, lastName, phone }) {
     try {
