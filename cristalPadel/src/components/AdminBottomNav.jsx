@@ -1,39 +1,47 @@
-export default function AdminBottomNav() {
+import { useNavigate } from "react-router-dom";
+
+export default function AdminBottomNav({ current = "reservas" }) {
+  const navigate = useNavigate();
+
+  const items = [
+    { key: "reservas", label: "Reservas", icon: "calendar_month", path: "/admin" },
+    { key: "canchas", label: "Canchas", icon: "grid_view", path: "/admin/canchas" }, // opcional
+    { key: "turnos", label: "Turnos", icon: "list_alt", path: "/admin/turnos" },
+    { key: "ajustes", label: "Ajustes", icon: "settings", path: "/admin/ajustes" }, // opcional
+  ];
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t border-primary/10 bg-background-light dark:bg-background-dark/95 backdrop-blur-md px-4 pb-6 pt-3 z-50">
       <div className="flex items-center justify-between max-w-md mx-auto">
-        <a className="flex flex-col items-center gap-1 text-primary" href="#">
-          <span
-            className="material-symbols-outlined" translate="no"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            calendar_month
-          </span>
-          <p className="text-[10px] font-bold uppercase tracking-widest">
-            Reservas
-          </p>
-        </a>
+        {items.map((item) => {
+          const active = current === item.key;
 
-        <a className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined" translate="no">grid_view</span>
-          <p className="text-[10px] font-bold uppercase tracking-widest">
-            Canchas
-          </p>
-        </a>
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => navigate(item.path)}
+              className={[
+                "flex flex-col items-center gap-1 transition-colors",
+                active
+                  ? "text-primary"
+                  : "text-slate-500 dark:text-slate-400 hover:text-primary",
+              ].join(" ")}
+            >
+              <span
+                className="material-symbols-outlined notranslate"
+                translate="no"
+                style={active ? { fontVariationSettings: "'FILL' 1" } : {}}
+              >
+                {item.icon}
+              </span>
 
-        <a className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined" translate="no">group</span>
-          <p className="text-[10px] font-bold uppercase tracking-widest">
-            Socios
-          </p>
-        </a>
-
-        <a className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
-          <span className="material-symbols-outlined" translate="no">settings</span>
-          <p className="text-[10px] font-bold uppercase tracking-widest">
-            Ajustes
-          </p>
-        </a>
+              <p className="text-[10px] font-bold uppercase tracking-widest">
+                {item.label}
+              </p>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

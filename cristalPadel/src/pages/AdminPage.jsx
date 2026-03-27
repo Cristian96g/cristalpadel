@@ -220,7 +220,7 @@ async function handleCancel(id) {
         onSubmit={handleCreateFixedBooking}
       />
 
-      <AdminBottomNav />
+      <AdminBottomNav current="reservas" />
       <BookingActionsModal
         open={Boolean(selectedBooking)}
         booking={selectedBooking}

@@ -79,3 +79,13 @@ export async function createFixedBooking(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+export async function getFixedBookings(req, res) {
+  try {
+    const fixedBookings = await FixedBooking.find().sort({ createdAt: -1 }).lean();
+    return res.json({ fixedBookings });
+  } catch (error) {
+    console.error("get fixed bookings error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}

@@ -11,3 +11,11 @@ export function createFixedBooking(payload) {
     body: JSON.stringify(payload),
   });
 }
+export function getFixedBookings() {
+  return apiFetch("/api/fixed-bookings", {
+    method: "GET",
+    headers: {
+      "x-admin-token": ADMIN_TOKEN,
+    },
+  });
+}
