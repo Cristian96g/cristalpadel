@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { createBooking } from "../api/bookings.js";
 import { createFixedBooking } from "../api/fixedBookings.js";
@@ -23,7 +24,7 @@ function todayISO() {
 
 function formatDateNice(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d); // ✅ LOCAL
+  const date = new Date(y, m - 1, d);
 
   const dias = [
     "domingo",
@@ -43,6 +44,12 @@ function formatDateNice(dateStr) {
 }
 
 export default function AdminPage() {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
   const [selected, setSelected] = useState(null);
   const [date, setDate] = useState(todayISO());
   const [grid, setGrid] = useState([]);
@@ -60,6 +67,11 @@ export default function AdminPage() {
       setGrid(data.grid || []);
     } catch (error) {
       console.error("admin load error:", error);
+
+      if (error.status === 401 || error.status === 403) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
     } finally {
       setLoading(false);
     }
@@ -117,15 +129,15 @@ export default function AdminPage() {
     };
   }, [date]);
 
-async function handleCancel(id) {
-  try {
-    await cancelAdminBooking(id, "Cancelado por admin");
-    await loadGrid();
-  } catch (error) {
-    console.error("cancel error:", error);
-    alert("No se pudo cancelar la reserva");
+  async function handleCancel(id) {
+    try {
+      await cancelAdminBooking(id, "Cancelado por admin");
+      await loadGrid();
+    } catch (error) {
+      console.error("cancel error:", error);
+      alert("No se pudo cancelar la reserva");
+    }
   }
-}
 
   async function handleCreateBooking({ name, lastName, phone }) {
     try {
@@ -159,7 +171,8 @@ async function handleCancel(id) {
     } catch (error) {
       return {
         ok: false,
-        message: error?.data?.message || error.message || "No se pudo crear el turno fijo",
+        message:
+          error?.data?.message || error.message || "No se pudo crear el turno fijo",
       };
     }
   }
@@ -221,6 +234,7 @@ async function handleCancel(id) {
       />
 
       <AdminBottomNav current="reservas" />
+
       <BookingActionsModal
         open={Boolean(selectedBooking)}
         booking={selectedBooking}

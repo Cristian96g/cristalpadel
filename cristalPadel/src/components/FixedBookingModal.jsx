@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { generateStartTimes } from "../utils/slots.js";
 
 const WEEKDAYS = [
   { value: 0, label: "Domingo" },
@@ -9,6 +10,12 @@ const WEEKDAYS = [
   { value: 5, label: "Viernes" },
   { value: 6, label: "Sábado" },
 ];
+
+const AVAILABLE_START_TIMES = generateStartTimes({
+  openTime: "16:00",
+  closeTime: "23:00",
+  slotMinutes: 90,
+});
 
 function todayISO() {
   const now = new Date();
@@ -25,7 +32,7 @@ export default function FixedBookingModal({ open, onClose, onSubmit }) {
     phone: "",
     court: "1",
     weekday: "3",
-    startTime: "16:00",
+    startTime: AVAILABLE_START_TIMES[0] || "16:00",
     startDate: todayISO(),
     endDate: "",
   });
@@ -63,7 +70,7 @@ export default function FixedBookingModal({ open, onClose, onSubmit }) {
         phone: "",
         court: "1",
         weekday: "3",
-        startTime: "16:00",
+        startTime: AVAILABLE_START_TIMES[0] || "16:00",
         startDate: todayISO(),
         endDate: "",
       });
@@ -138,13 +145,18 @@ export default function FixedBookingModal({ open, onClose, onSubmit }) {
             </select>
           </div>
 
-          <input
-            type="time"
+          <select
             value={form.startTime}
             onChange={(e) => updateField("startTime", e.target.value)}
             className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3"
             required
-          />
+          >
+            {AVAILABLE_START_TIMES.map((time) => (
+              <option key={time} value={time}>
+                {time}
+              </option>
+            ))}
+          </select>
 
           <div className="grid grid-cols-2 gap-3">
             <div>

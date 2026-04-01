@@ -11,6 +11,7 @@ import fixedBookingsRouter from "./routes/fixedBookingsRoutes.js";
 import availabilityRouter from "./routes/availabilityRoutes.js";
 import bookingsRouter from "./routes/bookingsRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import { setIO } from "./socket.js";
 
 dotenv.config();
@@ -48,6 +49,7 @@ app.use("/api/fixed-bookings", fixedBookingsRouter);
 app.use("/api/availability", availabilityRouter);
 app.use("/api/bookings", bookingsRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT || 4000;
 

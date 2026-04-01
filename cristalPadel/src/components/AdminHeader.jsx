@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminHeader({
   unreadCount = 0,
@@ -7,6 +8,8 @@ export default function AdminHeader({
   onNotificationClick,
 }) {
   const [open, setOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   function handleToggleNotifications() {
     const nextOpen = !open;
@@ -14,7 +17,18 @@ export default function AdminHeader({
 
     if (nextOpen) {
       onOpenNotifications?.();
+      setUserMenuOpen(false);
     }
+  }
+
+  function handleToggleUserMenu() {
+    setUserMenuOpen((prev) => !prev);
+    setOpen(false);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -53,18 +67,42 @@ export default function AdminHeader({
             )}
           </button>
 
-          <div className="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark font-bold">
-            <span
-              className="material-symbols-outlined notranslate"
-              translate="no"
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleToggleUserMenu}
+              className="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark font-bold"
             >
-              person
-            </span>
+              <span
+                className="material-symbols-outlined notranslate"
+                translate="no"
+              >
+                person
+              </span>
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-12 w-52 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl z-50 p-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-left text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <span
+                    className="material-symbols-outlined text-base notranslate"
+                    translate="no"
+                  >
+                    logout
+                  </span>
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {open && (
-          <div className="absolute right-2 top-[72px] w-[320px] max-h-[360px] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl z-50 p-3">
+          <div className="absolute right-14 top-[72px] w-[320px] max-h-[360px] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl z-50 p-3">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-sm">Notificaciones</h3>
 
