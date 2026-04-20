@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import AdminHeader from "../components/AdminHeader.jsx";
 import TurnsTabs from "../components/TurnsTabs.jsx";
 import BookingsList from "../components/BookingsList.jsx";
 import FixedBookingsList from "../components/FixedBookingsList.jsx";
-import AdminBottomNav from "../components/AdminBottomNav.jsx";
 import { getBookingsByDate } from "../api/adminBookings.js";
 import { getFixedBookings } from "../api/fixedBookings.js";
 
@@ -26,13 +24,7 @@ const WEEKDAY_LABELS = [
   "Sábado",
 ];
 
-export default function TurnsPage({
-  notifications = [],
-  unreadCount = 0,
-  onOpenNotifications,
-  onNotificationClick,
-  onChangeSection,
-}) {
+export default function TurnsPage() {
   const [activeTab, setActiveTab] = useState("bookings");
   const [bookings, setBookings] = useState([]);
   const [fixedBookings, setFixedBookings] = useState([]);
@@ -77,14 +69,7 @@ export default function TurnsPage({
   }, []);
 
   return (
-    <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-32">
-      <AdminHeader
-        unreadCount={unreadCount}
-        notifications={notifications}
-        onOpenNotifications={onOpenNotifications}
-        onNotificationClick={onNotificationClick}
-      />
-
+    <div>
       <div className="px-4 py-6 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="flex flex-col gap-2">
           <p className="text-primary text-sm font-semibold tracking-wider uppercase">
@@ -98,7 +83,7 @@ export default function TurnsPage({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-xl border text-white border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 [color-scheme:dark]"
               />
             </div>
           )}
@@ -110,10 +95,11 @@ export default function TurnsPage({
       {activeTab === "bookings" ? (
         <BookingsList bookings={bookings} loading={loadingBookings} />
       ) : (
-        <FixedBookingsList fixedBookings={fixedBookings} loading={loadingFixed} />
+        <FixedBookingsList
+          fixedBookings={fixedBookings}
+          loading={loadingFixed}
+        />
       )}
-
-      <AdminBottomNav current="turnos" onChange={onChangeSection} />
     </div>
   );
 }

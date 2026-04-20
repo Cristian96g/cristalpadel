@@ -5,7 +5,9 @@ import BookingPage from "./pages/BookingPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import TurnsPage from "./pages/TurnsPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import SettingsPage from "./pages/SettingsPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminLayout from "./layouts/AdminLayout.jsx";
 
 export default function App() {
   return (
@@ -15,24 +17,19 @@ export default function App() {
         <Route path="/" element={<BookingPage />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Admin protegido */}
+        {/* Admin protegido + layout */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute>
-              <AdminPage />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/admin/turnos"
-          element={
-            <ProtectedRoute>
-              <TurnsPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<AdminPage />} />
+          <Route path="turnos" element={<TurnsPage />} />
+          <Route path="ajustes" element={<SettingsPage />} />
+        </Route>
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

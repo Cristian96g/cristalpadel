@@ -23,7 +23,11 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token);
       navigate("/admin");
     } catch (err) {
-      setError(err?.data?.message || "Credenciales inválidas");
+      setError(
+        err?.data?.message ||
+          err.message ||
+          "No se pudo iniciar sesión"
+      );
     } finally {
       setLoading(false);
     }
@@ -31,54 +35,10 @@ export default function LoginPage() {
 
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-      <header className="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="7" cy="17" r="3" />
-                <circle cx="17" cy="7" r="3" />
-                <path d="M10 17h4a3 3 0 0 0 3-3V10" />
-              </svg>
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                Club Padel Pro
-              </p>
-              <h1 className="text-xl font-extrabold tracking-tight">
-                Acceso administrador
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M20 21a8 8 0 1 0-16 0" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto flex min-h-[calc(100vh-76px)] w-full max-w-md flex-col px-4 py-6">
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-6">
         <section className="rounded-[28px] bg-gradient-to-b from-primary/10 to-transparent px-4 py-6">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-            Panel de control
+            Club Padel Pro
           </p>
           <h2 className="mt-2 text-4xl font-extrabold leading-tight">
             Ingresá para administrar reservas

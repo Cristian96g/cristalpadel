@@ -1,17 +1,14 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { createBooking } from "../api/bookings.js";
 import { createFixedBooking } from "../api/fixedBookings.js";
 import ConfirmModal from "../components/ConfirmModal.jsx";
 import { getAdminGrid, cancelAdminBooking } from "../api/adminBookings.js";
-import AdminHeader from "../components/AdminHeader.jsx";
 import AdminDateSelector from "../components/AdminDateSelector.jsx";
 import AdminGrid from "../components/AdminGrid.jsx";
-import AdminBottomNav from "../components/AdminBottomNav.jsx";
 import AdminActions from "../components/AdminActions.jsx";
 import FixedBookingModal from "../components/FixedBookingModal.jsx";
 import BookingActionsModal from "../components/BookingActionsModal.jsx";
-import { socket } from "../lib/socket.js";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -22,29 +19,9 @@ function todayISO() {
   return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
 }
 
-function formatDateNice(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-
-  const dias = [
-    "domingo",
-    "lunes",
-    "martes",
-    "miércoles",
-    "jueves",
-    "viernes",
-    "sábado",
-  ];
-
-  const diaSemana = dias[date.getDay()];
-  const dia = String(date.getDate()).padStart(2, "0");
-  const mes = String(date.getMonth() + 1).padStart(2, "0");
-
-  return `${diaSemana} ${dia}/${mes}`;
-}
-
 export default function AdminPage() {
   const token = localStorage.getItem("token");
+  const location = useLocation();
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -54,16 +31,14 @@ export default function AdminPage() {
   const [date, setDate] = useState(todayISO());
   const [grid, setGrid] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [fixedModalOpen, setFixedModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [highlightedBookingId, setHighlightedBookingId] = useState(null);
 
-  async function loadGrid() {
+  async function loadGrid(targetDate = date) {
     setLoading(true);
     try {
-      const data = await getAdminGrid(date);
+      const data = await getAdminGrid(targetDate);
       setGrid(data.grid || []);
     } catch (error) {
       console.error("admin load error:", error);
@@ -82,52 +57,21 @@ export default function AdminPage() {
   }, [date]);
 
   useEffect(() => {
-    function handleBookingCreated(payload) {
-      setNotifications((prev) => [
-        {
-          id: `created-${payload.bookingId}-${Date.now()}`,
-          type: "created",
-          message: `Nueva reserva para el ${formatDateNice(payload.date)} a las ${payload.startTime} · Cancha ${payload.court}`,
-          payload,
-          createdAt: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
+    const notificationDate = location.state?.notificationDate;
+    const bookingId = location.state?.bookingId;
 
-      setUnreadCount((prev) => prev + 1);
-
-      if (payload.date === date) {
-        loadGrid();
-      }
+    if (notificationDate) {
+      setDate(notificationDate);
     }
 
-    function handleBookingCancelled(payload) {
-      setNotifications((prev) => [
-        {
-          id: `cancelled-${payload.bookingId}-${Date.now()}`,
-          type: "cancelled",
-          message: `Reserva cancelada para el ${formatDateNice(payload.date)} a las ${payload.startTime} · Cancha ${payload.court}`,
-          payload,
-          createdAt: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
+    if (bookingId) {
+      setHighlightedBookingId(bookingId);
 
-      setUnreadCount((prev) => prev + 1);
-
-      if (payload.date === date) {
-        loadGrid();
-      }
+      setTimeout(() => {
+        setHighlightedBookingId(null);
+      }, 4000);
     }
-
-    socket.on("booking:created", handleBookingCreated);
-    socket.on("booking:cancelled", handleBookingCancelled);
-
-    return () => {
-      socket.off("booking:created", handleBookingCreated);
-      socket.off("booking:cancelled", handleBookingCancelled);
-    };
-  }, [date]);
+  }, [location.state]);
 
   async function handleCancel(id) {
     try {
@@ -177,33 +121,8 @@ export default function AdminPage() {
     }
   }
 
-  function handleNotificationClick(notification) {
-    if (!notification?.payload) return;
-
-    const { date: notificationDate, bookingId } = notification.payload;
-
-    if (notificationDate) {
-      setDate(notificationDate);
-    }
-
-    if (bookingId) {
-      setHighlightedBookingId(bookingId);
-
-      setTimeout(() => {
-        setHighlightedBookingId(null);
-      }, 4000);
-    }
-  }
-
   return (
-    <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-32">
-      <AdminHeader
-        unreadCount={unreadCount}
-        notifications={notifications}
-        onOpenNotifications={() => setUnreadCount(0)}
-        onNotificationClick={handleNotificationClick}
-      />
-
+    <div>
       <AdminDateSelector date={date} onChangeDate={setDate} />
 
       <AdminActions onOpenFixedBooking={() => setFixedModalOpen(true)} />
@@ -232,8 +151,6 @@ export default function AdminPage() {
         onClose={() => setFixedModalOpen(false)}
         onSubmit={handleCreateFixedBooking}
       />
-
-      <AdminBottomNav current="reservas" />
 
       <BookingActionsModal
         open={Boolean(selectedBooking)}

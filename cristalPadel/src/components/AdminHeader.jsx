@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminHeader({
@@ -6,10 +6,21 @@ export default function AdminHeader({
   notifications = [],
   onOpenNotifications,
   onNotificationClick,
+  adminName = "",
+  adminLastName = "",
 }) {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  const adminFullName = [adminName, adminLastName].filter(Boolean).join(" ").trim();
+
+  const adminInitials = useMemo(() => {
+    const a = adminName?.trim()?.[0] || "";
+    const b = adminLastName?.trim()?.[0] || "";
+    const initials = `${a}${b}`.toUpperCase();
+    return initials || "A";
+  }, [adminName, adminLastName]);
 
   function handleToggleNotifications() {
     const nextOpen = !open;
@@ -71,22 +82,42 @@ export default function AdminHeader({
             <button
               type="button"
               onClick={handleToggleUserMenu}
-              className="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark font-bold"
+              className="flex items-center gap-2 rounded-2xl pl-2 pr-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <span
-                className="material-symbols-outlined notranslate"
-                translate="no"
-              >
-                person
-              </span>
+              <div className="hidden sm:flex flex-col items-end leading-tight">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Admin
+                </span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 max-w-[120px] truncate">
+                  {adminFullName || "Administrador"}
+                </span>
+              </div>
+
+              <div className="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark font-bold">
+                {adminInitials}
+              </div>
             </button>
 
             {userMenuOpen && (
-              <div className="absolute right-0 top-12 w-52 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl z-50 p-2">
+              <div className="absolute right-0 top-14 w-60 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl z-50 p-2">
+                <div className="px-3 py-3 border-b border-slate-200 dark:border-slate-800">
+  <p className="text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+    Sesión actual
+  </p>
+
+  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+    Administrador
+  </p>
+
+  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+    {adminFullName || "Sin nombre"}
+  </p>
+</div>
+
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-left text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  className="mt-2 w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-left text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <span
                     className="material-symbols-outlined text-base notranslate"

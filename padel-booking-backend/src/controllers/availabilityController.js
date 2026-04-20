@@ -6,6 +6,7 @@ function isPastTimeForDate(date, startTime) {
   const [y, m, d] = date.split("-").map(Number);
   const [hh, mm] = startTime.split(":").map(Number);
   const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
+  
   return dt.getTime() < Date.now();
 }
 
