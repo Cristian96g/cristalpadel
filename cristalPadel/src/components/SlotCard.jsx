@@ -22,12 +22,12 @@ export default function SlotCard({
       <button
         type="button"
         onClick={handleCardClick}
-         className={[
-        "flex-1 min-h-[88px] bg-slate-900/60 border p-3 rounded-xl text-left transition-all",
-        highlighted
-          ? "border-primary shadow-[0_0_0_2px_rgba(23,84,207,0.35)] ring-2 ring-primary/40"
-          : "border-slate-800 hover:bg-slate-900/80",
-      ].join(" ")}
+        className={[
+          "flex-1 min-h-[88px] bg-slate-900/60 border p-3 rounded-xl text-left transition-all",
+          highlighted
+            ? "border-primary shadow-[0_0_0_2px_rgba(23,84,207,0.35)] ring-2 ring-primary/40"
+            : "border-slate-800 hover:bg-slate-900/80",
+        ].join(" ")}
       >
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-bold text-slate-100">
@@ -55,29 +55,45 @@ export default function SlotCard({
     );
   }
 
- if (status === "available") {
-  return (
-    <button
-      type="button"
-      onClick={handleCardClick}
-      className="flex-1 min-h-[88px] bg-primary/10 border-2 border-dashed border-primary/30 rounded-xl flex flex-col items-center justify-center gap-1 p-3 cursor-pointer hover:bg-primary/20 transition-colors outline-none"
-    >
-      <span
-        className="material-symbols-outlined text-primary text-[28px] leading-none notranslate"
-        translate="no"
+  if (status === "available") {
+    return (
+      <button
+        type="button"
+        onClick={handleCardClick}
+        className="flex-1 min-h-[88px] bg-primary/10 border-2 border-dashed border-primary/30 rounded-xl flex flex-col items-center justify-center gap-1 p-3 cursor-pointer hover:bg-primary/20 transition-colors outline-none"
       >
-        add_circle
-      </span>
+        <span
+          className="material-symbols-outlined text-primary text-[28px] leading-none notranslate"
+          translate="no"
+        >
+          add_circle
+        </span>
 
-      <span className="text-[10px] font-black text-primary uppercase leading-none">
-        Disponible
-      </span>
-    </button>
-  );
-}
+        <span className="text-[10px] font-black text-primary uppercase leading-none">
+          Disponible
+        </span>
+      </button>
+    );
+  }
+
+  if (status === "past") {
+    return (
+      <div className="flex-1 min-h-[88px] bg-slate-900/40 border border-slate-800 p-3 rounded-xl flex flex-col items-center justify-center opacity-80">
+        <span
+          className="material-symbols-outlined text-slate-500 mb-1 notranslate"
+          translate="no"
+        >
+          schedule
+        </span>
+        <span className="text-[10px] font-black text-slate-500 uppercase text-center leading-none">
+          Horario pasado
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 bg-primary/5 border border-primary/10 p-3 rounded-lg flex flex-col items-center justify-center opacity-70">
+    <div className="flex-1 min-h-[88px] bg-primary/5 border border-primary/10 p-3 rounded-xl flex flex-col items-center justify-center opacity-70">
       <span
         className="material-symbols-outlined text-primary/60 mb-1 notranslate"
         translate="no"

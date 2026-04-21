@@ -3,10 +3,7 @@ import { generateStartTimes, addMinutes } from "../utils/slots.js";
 import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
 
 function isPastTimeForDate(date, startTime) {
-  const [y, m, d] = date.split("-").map(Number);
-  const [hh, mm] = startTime.split(":").map(Number);
-  const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
-  
+  const dt = new Date(`${date}T${startTime}:00`);
   return dt.getTime() < Date.now();
 }
 
@@ -37,7 +34,7 @@ export async function getAvailability(req, res) {
 
         return {
           court: courtNumber,
-          status: isTaken || isPast ? "booked" : "available",
+          status: isTaken ? "booked" : isPast ? "past" : "available",
         };
       }),
     }));

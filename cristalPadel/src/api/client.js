@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token");
@@ -7,7 +7,7 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
   });
@@ -17,8 +17,23 @@ export async function apiFetch(path, options = {}) {
     data = await res.json();
   } catch {}
 
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem("token");
+
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+
+    const err = new Error(data?.message || "No autorizado");
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+
   if (!res.ok) {
     const err = new Error(data?.message || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.data = data;
     throw err;
   }
 

@@ -6,9 +6,7 @@ import { getIO } from "../socket.js";
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 function isPastSlot(date, startTime) {
-  const [y, m, d] = date.split("-").map(Number);
-  const [hh, mm] = startTime.split(":").map(Number);
-  const slotDate = new Date(y, m - 1, d, hh, mm, 0, 0);
+  const slotDate = new Date(`${date}T${startTime}:00`);
   return slotDate.getTime() < Date.now();
 }
 
