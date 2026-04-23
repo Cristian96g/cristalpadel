@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import http from "http";
 import { Server } from "socket.io";
 
-
 import { applyDnsFix } from "./config/dnsFix.js";
 import fixedBookingsRouter from "./routes/fixedBookingsRoutes.js";
 import availabilityRouter from "./routes/availabilityRoutes.js";
@@ -20,17 +19,53 @@ import { rateLimit } from "./middlewares/rateLimit.js";
 dotenv.config();
 applyDnsFix();
 
+function normalizeOrigin(origin) {
+  return String(origin || "").trim().replace(/\/+$/, "");
+}
+
+function parseAllowedOrigins() {
+  const defaults = [
+    "http://localhost:5173",
+    "https://cristalpadel.vercel.app",
+  ];
+
+  const envOrigins = [
+    ...(process.env.CORS_ORIGIN || "").split(","),
+    ...(process.env.FRONTEND_URL || "").split(","),
+  ];
+
+  return [...defaults, ...envOrigins]
+    .map(normalizeOrigin)
+    .filter(Boolean)
+    .filter((origin, index, arr) => arr.indexOf(origin) === index);
+}
+
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = (process.env.CORS_ORIGIN || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const corsOrigin = allowedOrigins.length ? allowedOrigins : "*";
+const allowedOrigins = parseAllowedOrigins();
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin ${normalizedOrigin}`));
+  },
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
+};
 
 const io = new Server(server, {
   cors: {
-    origin: corsOrigin,
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PATCH"],
   },
 });
@@ -38,10 +73,10 @@ const io = new Server(server, {
 setIO(io);
 
 io.on("connection", (socket) => {
-  console.log("🟢 Cliente conectado:", socket.id);
+  console.log("Cliente conectado:", socket.id);
 
   socket.on("disconnect", () => {
-    console.log("🔴 Cliente desconectado:", socket.id);
+    console.log("Cliente desconectado:", socket.id);
   });
 });
 
@@ -53,13 +88,18 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "25kb" }));
-app.use(
-  cors({
-    origin: corsOrigin,
-  })
-);
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.get("/health", (req, res) => res.json({ ok: true }));
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState === 1) {
+    return next();
+  }
+
+  return res.status(503).json({ message: "Backend iniciando conexion con la base de datos" });
+});
+
 app.use("/api/auth/login", rateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: "login" }));
 app.use("/api/bookings", rateLimit({ windowMs: 60 * 1000, max: 30, keyPrefix: "bookings" }));
 app.use("/api/tournaments", tournamentsRouter);
@@ -78,14 +118,18 @@ async function start() {
       throw new Error("Missing MONGODB_URI in .env");
     }
 
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("✅ MongoDB connected");
+    console.log("Allowed CORS origins:", allowedOrigins.join(", "));
 
     server.listen(PORT, () => {
-      console.log(`✅ API + Socket running on http://localhost:${PORT}`);
+      console.log(`API + Socket running on http://localhost:${PORT}`);
     });
+
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+    });
+    console.log("MongoDB connected");
   } catch (err) {
-    console.error("❌ Startup error:", err);
+    console.error("Startup error:", err);
     process.exit(1);
   }
 }

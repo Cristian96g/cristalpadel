@@ -1,8 +1,7 @@
 import { io } from "socket.io-client";
+import { API_BASE_URL } from "../config/backend.js";
 
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
-
-export const socket = io(SOCKET_URL, {
+export const socket = io(API_BASE_URL, {
   transports: ["websocket", "polling"],
   autoConnect: true,
 });

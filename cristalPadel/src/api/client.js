@@ -1,9 +1,9 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+import { API_BASE_URL } from "../config/backend.js";
 
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
