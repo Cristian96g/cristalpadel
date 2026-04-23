@@ -1,9 +1,13 @@
 import { useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import { createBooking } from "../api/bookings.js";
 import { createFixedBooking } from "../api/fixedBookings.js";
 import ConfirmModal from "../components/ConfirmModal.jsx";
-import { getAdminGrid, cancelAdminBooking, confirmAdminBooking } from "../api/adminBookings.js";
+import {
+  createAdminBooking,
+  getAdminGrid,
+  cancelAdminBooking,
+  confirmAdminBooking,
+} from "../api/adminBookings.js";
 import AdminDateSelector from "../components/AdminDateSelector.jsx";
 import AdminGrid from "../components/AdminGrid.jsx";
 import AdminActions from "../components/AdminActions.jsx";
@@ -91,14 +95,13 @@ export default function AdminPage() {
 
   async function handleCreateBooking({ name, lastName, phone }) {
     try {
-      await createBooking({
+      await createAdminBooking({
         date,
         startTime: selected.startTime,
         court: selected.court,
         name,
         lastName,
         phone,
-        status: "confirmed",
       });
 
       setSelected(null);

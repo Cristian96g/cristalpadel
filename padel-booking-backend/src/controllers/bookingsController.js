@@ -4,23 +4,45 @@ import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
 import { BOOKING_PENDING_MINUTES, getBookingPaymentInfo } from "../config/bookingPayment.js";
 import { ACTIVE_BOOKING_STATUSES, expirePendingBookings, isWeekendDate } from "../utils/bookings.js";
 import { getIO } from "../socket.js";
-
-const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+import {
+  isValidDateString,
+  isValidObjectId,
+  isValidPhone,
+  normalizePhone,
+  normalizeText,
+} from "../utils/validation.js";
 
 function isPastSlot(date, startTime) {
   const slotDate = new Date(`${date}T${startTime}:00`);
   return slotDate.getTime() < Date.now();
 }
 
+function publicBookingPayload(booking) {
+  if (!booking) return null;
+
+  return {
+    _id: booking._id,
+    date: booking.date,
+    startTime: booking.startTime,
+    court: booking.court,
+    name: booking.name,
+    lastName: booking.lastName || "",
+    status: booking.status,
+    expiresAt: booking.expiresAt,
+    confirmedAt: booking.confirmedAt,
+    cancelledAt: booking.cancelledAt,
+  };
+}
+
 export async function createBooking(req, res) {
   try {
-    const { date, startTime, court, name, lastName, phone, status } = req.body;
+    const { date, startTime, court, name, lastName, phone } = req.body;
 
     if (!date || !startTime || !court || !name || !lastName || !phone) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
-    if (!isValidDate(date)) {
+    if (!isValidDateString(date)) {
       return res.status(400).json({ message: "Invalid date format (YYYY-MM-DD)" });
     }
 
@@ -35,15 +57,19 @@ export async function createBooking(req, res) {
       return res.status(400).json({ message: "Invalid court (1 or 2)" });
     }
 
-    if (String(name).trim().length < 3) {
+    const cleanName = normalizeText(name, 30);
+    const cleanLastName = normalizeText(lastName, 30);
+    const cleanPhone = normalizePhone(phone);
+
+    if (cleanName.length < 3) {
       return res.status(400).json({ message: "Invalid name" });
     }
 
-    if (String(lastName).trim().length < 3) {
+    if (cleanLastName.length < 3) {
       return res.status(400).json({ message: "Invalid last name" });
     }
 
-    if (String(phone).trim().length < 6) {
+    if (!isValidPhone(cleanPhone)) {
       return res.status(400).json({ message: "Invalid phone" });
     }
 
@@ -74,19 +100,16 @@ export async function createBooking(req, res) {
       return res.status(409).json({ message: "Slot already booked" });
     }
 
-    const requestedStatus = status === "confirmed" ? "confirmed" : "pending_payment";
-    const expiresAt =
-      requestedStatus === "pending_payment"
-        ? new Date(Date.now() + BOOKING_PENDING_MINUTES * 60 * 1000)
-        : null;
+    const requestedStatus = "pending_payment";
+    const expiresAt = new Date(Date.now() + BOOKING_PENDING_MINUTES * 60 * 1000);
 
     const booking = await Booking.create({
       date,
       startTime,
       court: courtNum,
-      name: String(name).trim(),
-      lastName: lastName ? String(lastName).trim() : "",
-      phone: String(phone).trim(),
+      name: cleanName,
+      lastName: cleanLastName,
+      phone: cleanPhone,
       status: requestedStatus,
       expiresAt,
       confirmedAt: requestedStatus === "confirmed" ? new Date() : null,
@@ -94,7 +117,6 @@ export async function createBooking(req, res) {
     });
 
     const io = getIO();
-
     io.emit("booking:created", {
       bookingId: booking._id,
       date: booking.date,
@@ -109,7 +131,7 @@ export async function createBooking(req, res) {
     });
 
     return res.status(201).json({
-      booking,
+      booking: publicBookingPayload(booking),
       payment: getBookingPaymentInfo(booking.expiresAt),
     });
   } catch (err) {
@@ -125,7 +147,11 @@ export async function createBooking(req, res) {
 export async function cancelBooking(req, res) {
   try {
     const { id } = req.params;
-    const { reason } = req.body;
+    const { reason } = req.body || {};
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Reserva invalida" });
+    }
 
     const booking = await Booking.findById(id);
 
@@ -133,19 +159,19 @@ export async function cancelBooking(req, res) {
       return res.status(404).json({ message: "Reserva no encontrada" });
     }
 
-    if (booking.status === "cancelled") {
-      return res.status(400).json({ message: "La reserva ya está cancelada" });
+    if (booking.status !== "pending_payment") {
+      return res.status(400).json({ message: "Solo se pueden cancelar reservas pendientes desde la web" });
     }
 
     booking.status = "cancelled";
     booking.cancelledAt = new Date();
-    booking.cancelReason = reason ? String(reason).trim() : null;
+    booking.cancelReason = reason ? normalizeText(reason, 120) : "Cancelada por el cliente";
 
     await booking.save();
 
     return res.json({
       message: "Reserva cancelada correctamente",
-      booking,
+      booking: publicBookingPayload(booking),
     });
   } catch (error) {
     console.error("cancel booking error:", error);
@@ -157,6 +183,10 @@ export async function getBookingById(req, res) {
   try {
     await expirePendingBookings();
 
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Reserva invalida" });
+    }
+
     const booking = await Booking.findById(req.params.id).lean();
 
     if (!booking) {
@@ -164,7 +194,7 @@ export async function getBookingById(req, res) {
     }
 
     return res.json({
-      booking,
+      booking: publicBookingPayload(booking),
       payment: getBookingPaymentInfo(booking.expiresAt),
     });
   } catch (error) {
@@ -177,7 +207,7 @@ export async function getBookingsByDate(req, res) {
   try {
     const { date } = req.query;
 
-    if (!date) {
+    if (!date || !isValidDateString(date)) {
       return res.status(400).json({ message: "date required" });
     }
 
@@ -187,7 +217,7 @@ export async function getBookingsByDate(req, res) {
       .sort({ startTime: 1, court: 1 })
       .lean();
 
-    return res.json({ bookings });
+    return res.json({ bookings: bookings.map(publicBookingPayload) });
   } catch (error) {
     console.error("get bookings by date error:", error);
     return res.status(500).json({ message: "Server error" });

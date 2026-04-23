@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import TurnsTabs from "../components/TurnsTabs.jsx";
 import BookingsList from "../components/BookingsList.jsx";
 import FixedBookingsList from "../components/FixedBookingsList.jsx";
-import { getBookingsByDate } from "../api/adminBookings.js";
+import { confirmAdminBooking, getBookingsByDate } from "../api/adminBookings.js";
 import { getFixedBookings } from "../api/fixedBookings.js";
 
 function pad2(n) {
@@ -32,22 +32,42 @@ export default function TurnsPage() {
   const [loadingFixed, setLoadingFixed] = useState(true);
   const [date, setDate] = useState(todayISO());
   const [statusFilter, setStatusFilter] = useState("all");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const loadBookings = useCallback(async () => {
+    setLoadingBookings(true);
+    try {
+      const data = await getBookingsByDate(date);
+      setBookings(data.bookings || []);
+    } catch (err) {
+      console.error("bookings list error:", err);
+      setError(err?.data?.message || err.message || "No se pudieron cargar los turnos");
+    } finally {
+      setLoadingBookings(false);
+    }
+  }, [date]);
 
   useEffect(() => {
-    async function loadBookings() {
-      setLoadingBookings(true);
-      try {
-        const data = await getBookingsByDate(date);
-        setBookings(data.bookings || []);
-      } catch (error) {
-        console.error("bookings list error:", error);
-      } finally {
-        setLoadingBookings(false);
-      }
-    }
-
     loadBookings();
-  }, [date]);
+  }, [loadBookings]);
+
+  async function handleConfirmExpired(booking) {
+    const ok = window.confirm(
+      "¿Confirmar manualmente esta reserva vencida? Solo se permitira si el horario no fue tomado por otra reserva confirmada."
+    );
+    if (!ok) return;
+
+    setMessage("");
+    setError("");
+    try {
+      await confirmAdminBooking(booking._id);
+      setMessage("Reserva confirmada manualmente.");
+      await loadBookings();
+    } catch (err) {
+      setError(err?.data?.message || err.message || "No se pudo confirmar la reserva vencida");
+    }
+  }
 
   useEffect(() => {
     async function loadFixedBookings() {
@@ -94,12 +114,27 @@ export default function TurnsPage() {
       <TurnsTabs activeTab={activeTab} onChangeTab={setActiveTab} />
 
       {activeTab === "bookings" ? (
-        <BookingsList
-          bookings={bookings}
-          loading={loadingBookings}
-          statusFilter={statusFilter}
-          onChangeStatusFilter={setStatusFilter}
-        />
+        <>
+          <div className="px-4 space-y-2">
+            {message ? (
+              <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400">
+                {message}
+              </p>
+            ) : null}
+            {error ? (
+              <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400">
+                {error}
+              </p>
+            ) : null}
+          </div>
+          <BookingsList
+            bookings={bookings}
+            loading={loadingBookings}
+            statusFilter={statusFilter}
+            onChangeStatusFilter={setStatusFilter}
+            onConfirmExpired={handleConfirmExpired}
+          />
+        </>
       ) : (
         <FixedBookingsList
           fixedBookings={fixedBookings}

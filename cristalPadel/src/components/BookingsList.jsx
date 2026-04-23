@@ -13,6 +13,7 @@ export default function BookingsList({
   loading = false,
   statusFilter = "all",
   onChangeStatusFilter,
+  onConfirmExpired,
 }) {
   if (loading) {
     return <p className="px-4">Cargando turnos...</p>;
@@ -81,9 +82,18 @@ export default function BookingsList({
             </p>
           </div>
           {booking.status === "expired" ? (
-            <p className="mt-3 rounded-2xl bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400">
-              Esta reserva vencio y ya no bloquea el horario.
-            </p>
+            <div className="mt-3 space-y-3">
+              <p className="rounded-2xl bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400">
+                Esta reserva vencio y ya no bloquea el horario.
+              </p>
+              <button
+                type="button"
+                onClick={() => onConfirmExpired?.(booking)}
+                className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white"
+              >
+                Confirmar manualmente
+              </button>
+            </div>
           ) : null}
         </div>
       ))}

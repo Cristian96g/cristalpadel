@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getBooking } from "../api/bookings.js";
+import { cancelPublicBooking, getBooking } from "../api/bookings.js";
 import { clearPendingBooking, savePendingBooking } from "../utils/pendingBookingStorage.js";
 import { formatDisplayDate, formatLongDate } from "../utils/dates.js";
 
@@ -40,6 +40,9 @@ export default function PendingBookingPage() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -105,6 +108,31 @@ export default function PendingBookingPage() {
     document.getElementById("alias-section")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function scrollToWhatsApp() {
+    document.getElementById("whatsapp-section")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function handleCancelBooking() {
+    if (!booking?._id) return;
+
+    setCancelling(true);
+    setError("");
+    try {
+      const result = await cancelPublicBooking(booking._id);
+      clearPendingBooking();
+      setData((current) => ({
+        ...current,
+        booking: result.booking || { ...booking, status: "cancelled" },
+      }));
+      setCancelModalOpen(false);
+      setCancelMessage("Reserva cancelada. El turno quedo liberado.");
+    } catch (err) {
+      setError(err?.data?.message || err.message || "No se pudo cancelar la reserva");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   return (
     <div className="w-full min-h-screen bg-background-light pb-10 font-display text-slate-900 dark:bg-background-dark dark:text-slate-100">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-background-light/90 px-4 py-4 backdrop-blur-xl dark:border-slate-800 dark:bg-background-dark/90">
@@ -143,13 +171,28 @@ export default function PendingBookingPage() {
                     Vence en: {dynamicLeft}
                   </p>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={scrollToAlias}
-                  className="mt-4 w-full rounded-2xl bg-primary px-4 py-3.5 font-bold text-white shadow-lg shadow-primary/20"
-                >
-                  Ver alias para pagar ↓
-                </button>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={scrollToAlias}
+                    className="rounded-2xl bg-primary px-4 py-3.5 font-bold text-white shadow-lg shadow-primary/20"
+                  >
+                    Ver alias
+                  </button>
+                  <button
+                    type="button"
+                    onClick={scrollToWhatsApp}
+                    className="rounded-2xl border border-primary/40 bg-slate-950/40 px-4 py-3.5 font-bold text-white"
+                  >
+                    Ver WhatsApp
+                  </button>
+                </div>
+              </section>
+            ) : null}
+
+            {cancelMessage ? (
+              <section className="rounded-[28px] border border-emerald-500/20 bg-emerald-500/10 p-5 text-sm font-semibold text-emerald-300">
+                {cancelMessage}
               </section>
             ) : null}
 
@@ -181,7 +224,7 @@ export default function PendingBookingPage() {
               </div>
             </section>
 
-            <section id="alias-section" className="scroll-mt-24 rounded-[28px] border border-slate-800 bg-slate-900 p-5">
+            <section  className="scroll-mt-24 rounded-[28px] border border-slate-800 bg-slate-900 p-5">
               <h2 className="text-xl font-extrabold text-white">Datos del turno</h2>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <Info label="Fecha" value={formatLongDate(booking.date)} wide />
@@ -192,7 +235,7 @@ export default function PendingBookingPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-800 bg-slate-900 p-5">
+            <section id="alias-section" className="rounded-[28px] border border-slate-800 bg-slate-900 p-5">
               <h2 className="text-xl font-extrabold text-white">Seña por transferencia</h2>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Info label="Total" value={formatMoney(payment?.totalPrice)} />
@@ -214,7 +257,7 @@ export default function PendingBookingPage() {
               </button>
             </section>
 
-            <section className="rounded-[28px] border border-slate-800 bg-slate-900 p-5">
+            <section id="whatsapp-section" className="scroll-mt-24 rounded-[28px] border border-slate-800 bg-slate-900 p-5">
               <h2 className="text-xl font-extrabold text-white">Enviar comprobante</h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 WhatsApp del club: <span className="font-bold text-white">{payment?.whatsappNumber}</span>
@@ -234,9 +277,54 @@ export default function PendingBookingPage() {
                 Enviar comprobante por WhatsApp
               </a>
             </section>
+
+            {booking.status === "pending_payment" ? (
+              <section className="rounded-[28px] border border-red-500/20 bg-red-500/10 p-5">
+                <h2 className="text-lg font-extrabold text-white">¿No vas a hacer la seña?</h2>
+                <p className="mt-2 text-sm leading-6 text-red-100/80">
+                  Podes cancelar la reserva para liberar el horario.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCancelModalOpen(true)}
+                  className="mt-4 w-full rounded-2xl border border-red-400/40 px-4 py-3.5 font-bold text-red-200"
+                >
+                  Cancelar reserva
+                </button>
+              </section>
+            ) : null}
           </>
         ) : null}
       </main>
+
+      {cancelModalOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/75 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-sm rounded-[28px] border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+            <h2 className="text-xl font-extrabold text-white">¿Cancelar reserva?</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Se liberara el turno y ya no vas a ver las instrucciones de pago como pendiente.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={() => setCancelModalOpen(false)}
+                className="rounded-2xl border border-slate-700 px-4 py-3 font-bold text-white disabled:opacity-60"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={handleCancelBooking}
+                className="rounded-2xl bg-red-500 px-4 py-3 font-bold text-white disabled:opacity-60"
+              >
+                {cancelling ? "Cancelando..." : "Cancelar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

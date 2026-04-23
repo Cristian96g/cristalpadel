@@ -5,7 +5,14 @@ export function getAdminGrid(date) {
 }
 
 export function getBookingsByDate(date) {
-  return apiFetch(`/api/bookings?date=${encodeURIComponent(date)}`);
+  return apiFetch(`/api/admin/bookings?date=${encodeURIComponent(date)}`);
+}
+
+export function createAdminBooking(payload) {
+  return apiFetch(`/api/admin/bookings`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function cancelAdminBooking(id, reason = "") {

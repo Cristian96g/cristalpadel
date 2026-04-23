@@ -2,6 +2,7 @@ import Booking from "../models/Booking.js";
 import { generateStartTimes, addMinutes } from "../utils/slots.js";
 import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
 import { ACTIVE_BOOKING_STATUSES, expirePendingBookings, isWeekendDate } from "../utils/bookings.js";
+import { isValidDateString } from "../utils/validation.js";
 
 function isPastTimeForDate(date, startTime) {
   const dt = new Date(`${date}T${startTime}:00`);
@@ -11,7 +12,7 @@ function isPastTimeForDate(date, startTime) {
 export async function getAvailability(req, res) {
   try {
     const { date } = req.query;
-    if (!date) return res.status(400).json({ message: "date required" });
+    if (!date || !isValidDateString(date)) return res.status(400).json({ message: "date required" });
 
     await expirePendingBookings({ date });
 

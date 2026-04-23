@@ -20,3 +20,10 @@ export async function createBooking(payload) {
 export function getBooking(id) {
   return apiFetch(`/api/bookings/${id}`);
 }
+
+export function cancelPublicBooking(id) {
+  return apiFetch(`/api/bookings/${id}/cancel`, {
+    method: "PATCH",
+    body: JSON.stringify({ reason: "Cancelada por el cliente" }),
+  });
+}

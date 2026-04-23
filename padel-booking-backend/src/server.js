@@ -15,16 +15,22 @@ import authRoutes from "./routes/authRoutes.js";
 import tournamentsRouter from "./routes/tournamentsRoutes.js";
 import adminTournamentsRouter from "./routes/adminTournamentsRoutes.js";
 import { setIO } from "./socket.js";
+import { rateLimit } from "./middlewares/rateLimit.js";
 
 dotenv.config();
 applyDnsFix();
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOrigin = allowedOrigins.length ? allowedOrigins : "*";
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: corsOrigin,
     methods: ["GET", "POST", "PATCH"],
   },
 });
@@ -39,14 +45,23 @@ io.on("connection", (socket) => {
   });
 });
 
-app.use(express.json());
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
+app.use(express.json({ limit: "25kb" }));
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: corsOrigin,
   })
 );
 
 app.get("/health", (req, res) => res.json({ ok: true }));
+app.use("/api/auth/login", rateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: "login" }));
+app.use("/api/bookings", rateLimit({ windowMs: 60 * 1000, max: 30, keyPrefix: "bookings" }));
 app.use("/api/tournaments", tournamentsRouter);
 app.use("/api/fixed-bookings", fixedBookingsRouter);
 app.use("/api/availability", availabilityRouter);

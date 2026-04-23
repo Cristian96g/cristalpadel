@@ -6,9 +6,9 @@ const BookingSchema = new mongoose.Schema(
     startTime: { type: String, required: true }, // HH:mm
     court: { type: Number, required: true, enum: [1, 2] },
 
-    name: { type: String, required: true, trim: true, maxlength: 12 },
-    lastName: {type: String, required: true, trim: true, maxlength:12},
-    phone: { type: String, required: true, trim: true, maxlength: 14 },
+    name: { type: String, required: true, trim: true, maxlength: 30 },
+    lastName: { type: String, required: true, trim: true, maxlength: 30 },
+    phone: { type: String, required: true, trim: true, maxlength: 20 },
 
     status: {
       type: String,
