@@ -5,8 +5,8 @@ export default function AdminBottomNav({ current = "reservas" }) {
 
   const items = [
     { key: "reservas", label: "Reservas", icon: "calendar_month", path: "/admin" },
-    { key: "canchas", label: "Canchas", icon: "grid_view", path: "/admin/canchas" }, // opcional
     { key: "turnos", label: "Turnos", icon: "list_alt", path: "/admin/turnos" },
+    { key: "torneos", label: "Torneos", icon: "trophy", path: "/admin/torneos" },
     { key: "ajustes", label: "Ajustes", icon: "settings", path: "/admin/ajustes" }, // opcional
   ];
 

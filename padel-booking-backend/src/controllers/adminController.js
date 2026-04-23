@@ -2,6 +2,7 @@ import Booking from "../models/Booking.js";
 import { generateStartTimes } from "../utils/slots.js";
 import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
 import { getIO } from "../socket.js";
+import { ACTIVE_BOOKING_STATUSES, expirePendingBookings } from "../utils/bookings.js";
 
 function isPastSlot(date, startTime) {
   const [y, m, d] = date.split("-").map(Number);
@@ -18,6 +19,8 @@ export async function getAdminGrid(req, res) {
       return res.status(400).json({ message: "date required" });
     }
 
+    await expirePendingBookings({ date });
+
     const startTimes = generateStartTimes({
       openTime: OPEN_TIME,
       closeTime: CLOSE_TIME,
@@ -26,7 +29,7 @@ export async function getAdminGrid(req, res) {
 
     const bookings = await Booking.find({
       date,
-      status: "confirmed",
+      status: { $in: ACTIVE_BOOKING_STATUSES },
     })
       .sort({ startTime: 1, court: 1 })
       .lean();
@@ -54,6 +57,7 @@ export async function getAdminGrid(req, res) {
                   lastName: court1.lastName || "",
                   phone: court1.phone || "",
                   status: court1.status,
+                  expiresAt: court1.expiresAt,
                   date: court1.date,
                   startTime: court1.startTime,
                   court: court1.court,
@@ -75,6 +79,7 @@ export async function getAdminGrid(req, res) {
                   lastName: court2.lastName || "",
                   phone: court2.phone || "",
                   status: court2.status,
+                  expiresAt: court2.expiresAt,
                   date: court2.date,
                   startTime: court2.startTime,
                   court: court2.court,
@@ -145,6 +150,42 @@ export async function cancelAdminBooking(req, res) {
     });
   } catch (error) {
     console.error("cancel booking error FULL:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function confirmAdminBooking(req, res) {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Reserva no encontrada" });
+    }
+
+    if (booking.status !== "pending_payment") {
+      return res.status(400).json({ message: "Solo se pueden confirmar reservas pendientes" });
+    }
+
+    booking.status = "confirmed";
+    booking.expiresAt = null;
+    booking.confirmedAt = new Date();
+
+    await booking.save();
+
+    const io = getIO();
+    io.emit("booking:confirmed", {
+      bookingId: booking._id,
+      date: booking.date,
+      startTime: booking.startTime,
+      court: booking.court,
+    });
+
+    return res.json({
+      message: "Reserva confirmada correctamente",
+      booking,
+    });
+  } catch (error) {
+    console.error("confirm booking error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 }

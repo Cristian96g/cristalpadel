@@ -14,3 +14,9 @@ export function cancelAdminBooking(id, reason = "") {
     body: JSON.stringify({ reason }),
   });
 }
+
+export function confirmAdminBooking(id) {
+  return apiFetch(`/api/admin/bookings/${id}/confirm`, {
+    method: "PATCH",
+  });
+}

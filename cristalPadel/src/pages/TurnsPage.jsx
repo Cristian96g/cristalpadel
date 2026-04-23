@@ -31,6 +31,7 @@ export default function TurnsPage() {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [loadingFixed, setLoadingFixed] = useState(true);
   const [date, setDate] = useState(todayISO());
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     async function loadBookings() {
@@ -93,7 +94,12 @@ export default function TurnsPage() {
       <TurnsTabs activeTab={activeTab} onChangeTab={setActiveTab} />
 
       {activeTab === "bookings" ? (
-        <BookingsList bookings={bookings} loading={loadingBookings} />
+        <BookingsList
+          bookings={bookings}
+          loading={loadingBookings}
+          statusFilter={statusFilter}
+          onChangeStatusFilter={setStatusFilter}
+        />
       ) : (
         <FixedBookingsList
           fixedBookings={fixedBookings}

@@ -1,14 +1,15 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import { createBooking } from "../api/bookings.js";
 import { createFixedBooking } from "../api/fixedBookings.js";
 import ConfirmModal from "../components/ConfirmModal.jsx";
-import { getAdminGrid, cancelAdminBooking } from "../api/adminBookings.js";
+import { getAdminGrid, cancelAdminBooking, confirmAdminBooking } from "../api/adminBookings.js";
 import AdminDateSelector from "../components/AdminDateSelector.jsx";
 import AdminGrid from "../components/AdminGrid.jsx";
 import AdminActions from "../components/AdminActions.jsx";
 import FixedBookingModal from "../components/FixedBookingModal.jsx";
 import BookingActionsModal from "../components/BookingActionsModal.jsx";
+import { formatDisplayDate } from "../utils/dates.js";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -20,12 +21,7 @@ function todayISO() {
 }
 
 export default function AdminPage() {
-  const token = localStorage.getItem("token");
   const location = useLocation();
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
 
   const [selected, setSelected] = useState(null);
   const [date, setDate] = useState(todayISO());
@@ -35,7 +31,7 @@ export default function AdminPage() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [highlightedBookingId, setHighlightedBookingId] = useState(null);
 
-  async function loadGrid(targetDate = date) {
+  const loadGrid = useCallback(async (targetDate = date) => {
     setLoading(true);
     try {
       const data = await getAdminGrid(targetDate);
@@ -50,11 +46,11 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [date]);
 
   useEffect(() => {
     loadGrid();
-  }, [date]);
+  }, [loadGrid]);
 
   useEffect(() => {
     const notificationDate = location.state?.notificationDate;
@@ -83,6 +79,16 @@ export default function AdminPage() {
     }
   }
 
+  async function handleConfirmPending(id) {
+    try {
+      await confirmAdminBooking(id);
+      await loadGrid();
+    } catch (error) {
+      console.error("confirm pending error:", error);
+      alert("No se pudo confirmar la reserva");
+    }
+  }
+
   async function handleCreateBooking({ name, lastName, phone }) {
     try {
       await createBooking({
@@ -92,6 +98,7 @@ export default function AdminPage() {
         name,
         lastName,
         phone,
+        status: "confirmed",
       });
 
       setSelected(null);
@@ -141,7 +148,7 @@ export default function AdminPage() {
         onConfirm={handleCreateBooking}
         subtitle={
           selected
-            ? `Cancha ${selected.court} • ${date} • ${selected.startTime}`
+            ? `Cancha ${selected.court} • ${formatDisplayDate(date)} • ${selected.startTime}`
             : ""
         }
       />
@@ -157,6 +164,7 @@ export default function AdminPage() {
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}
         onCancel={handleCancel}
+        onConfirmPending={handleConfirmPending}
       />
     </div>
   );

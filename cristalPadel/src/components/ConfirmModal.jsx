@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 
 export default function ConfirmModal({ open, onClose, onConfirm, subtitle }) {
@@ -49,8 +50,11 @@ export default function ConfirmModal({ open, onClose, onConfirm, subtitle }) {
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="text-center space-y-2">
-          <h3 className="text-xl font-bold">Confirmar Reserva</h3>
+          <h3 className="text-xl font-bold">Reservar turno</h3>
           <p className="text-slate-500 text-sm">{subtitle}</p>
+          <p className="rounded-2xl bg-amber-400/10 px-4 py-3 text-xs font-semibold text-amber-500">
+            El turno queda pendiente hasta que envies la seña por WhatsApp.
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -96,7 +100,7 @@ export default function ConfirmModal({ open, onClose, onConfirm, subtitle }) {
             disabled={saving}
             className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/30 disabled:opacity-70"
           >
-            {saving ? "Confirmando…" : "Confirmar Reserva"}
+            {saving ? "Reservando..." : "Reservar y ver instrucciones"}
           </button>
 
           <button

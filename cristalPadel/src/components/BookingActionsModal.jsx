@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { formatDisplayDate } from "../utils/dates.js";
 
 export default function BookingActionsModal({
   open,
   booking,
   onClose,
   onCancel,
+  onConfirmPending,
 }) {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [submittingCancel, setSubmittingCancel] = useState(false);
+  const [submittingConfirm, setSubmittingConfirm] = useState(false);
 
   if (!open || !booking) return null;
 
@@ -24,11 +27,15 @@ export default function BookingActionsModal({
     const cleanPhone = String(booking.phone).replace(/\D/g, "");
     const fullName = `${booking.name || ""} ${booking.lastName || ""}`.trim();
 
-    const message = `Hola ${fullName || "cliente"}, te escribo de Cristal Pádel por tu reserva del ${booking.date} a las ${booking.startTime} en la cancha ${booking.court}.`;
+    const message = `Hola ${fullName || "cliente"}, te escribo de Cristal Padel por tu reserva del ${formatDisplayDate(booking.date)} a las ${booking.startTime} en la cancha ${booking.court}.`;
 
     const url = `https://wa.me/549${cleanPhone}?text=${encodeURIComponent(message)}`;
 
     window.open(url, "_blank");
+  }
+
+  function handleOpenPublicView() {
+    window.open(`/reserva/${booking._id}/pendiente`, "_blank");
   }
 
   async function handleConfirmCancel() {
@@ -41,6 +48,18 @@ export default function BookingActionsModal({
       console.error("cancel modal error:", error);
     } finally {
       setSubmittingCancel(false);
+    }
+  }
+
+  async function handleConfirmPending() {
+    try {
+      setSubmittingConfirm(true);
+      await onConfirmPending?.(booking._id);
+      onClose?.();
+    } catch (error) {
+      console.error("confirm pending modal error:", error);
+    } finally {
+      setSubmittingConfirm(false);
     }
   }
 
@@ -84,7 +103,7 @@ export default function BookingActionsModal({
               </p>
 
               <p>
-                <strong>Fecha:</strong> {booking.date}
+                <strong>Fecha:</strong> {formatDisplayDate(booking.date)}
               </p>
 
               <p>
@@ -92,9 +111,9 @@ export default function BookingActionsModal({
               </p>
 
               <div className="flex items-center gap-2 pt-1">
-                <span className="size-2 rounded-full bg-primary"></span>
-                <span className="text-[11px] uppercase font-bold text-primary">
-                  Confirmado
+                <span className={`size-2 rounded-full ${booking.status === "pending_payment" ? "bg-amber-400" : "bg-primary"}`}></span>
+                <span className={`text-[11px] uppercase font-bold ${booking.status === "pending_payment" ? "text-amber-400" : "text-primary"}`}>
+                  {booking.status === "pending_payment" ? "Pendiente de seña" : "Confirmado"}
                 </span>
 
                 {booking.fixedBookingId && (
@@ -136,6 +155,27 @@ export default function BookingActionsModal({
             </div>
 
             <div className="space-y-3">
+              {booking.status === "pending_payment" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleOpenPublicView}
+                    className="w-full rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 font-bold text-primary"
+                  >
+                    Ver publico
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleConfirmPending}
+                    disabled={submittingConfirm}
+                    className="w-full rounded-xl bg-emerald-600 text-white px-4 py-3 font-bold disabled:opacity-60"
+                  >
+                    {submittingConfirm ? "Confirmando..." : "Marcar como confirmada"}
+                  </button>
+                </>
+              ) : null}
+
               <button
                 type="button"
                 onClick={() => setConfirmingCancel(true)}
@@ -176,7 +216,7 @@ export default function BookingActionsModal({
                 <strong>Jugador:</strong> {booking.name} {booking.lastName || ""}
               </p>
               <p>
-                <strong>Fecha:</strong> {booking.date}
+                <strong>Fecha:</strong> {formatDisplayDate(booking.date)}
               </p>
               <p>
                 <strong>Hora:</strong> {booking.startTime}

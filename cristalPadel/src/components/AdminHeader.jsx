@@ -8,12 +8,15 @@ export default function AdminHeader({
   onNotificationClick,
   adminName = "",
   adminLastName = "",
+  sectionTitle = "Reservas",
+  profileLoading = false,
 }) {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const adminFullName = [adminName, adminLastName].filter(Boolean).join(" ").trim();
+  const displayName = profileLoading ? "Cargando perfil..." : adminFullName || "Administrador";
 
   const adminInitials = useMemo(() => {
     const a = adminName?.trim()?.[0] || "";
@@ -89,7 +92,7 @@ export default function AdminHeader({
                   Admin
                 </span>
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 max-w-[120px] truncate">
-                  {adminFullName || "Administrador"}
+                  {displayName}
                 </span>
               </div>
 
@@ -110,7 +113,7 @@ export default function AdminHeader({
   </p>
 
   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-    {adminFullName || "Sin nombre"}
+    {displayName}
   </p>
 </div>
 
@@ -188,7 +191,7 @@ export default function AdminHeader({
             Panel de Control
           </p>
           <h1 className="text-slate-900 dark:text-slate-100 text-3xl font-extrabold tracking-tight">
-            Admin - Reservas
+            Admin - {sectionTitle}
           </h1>
         </div>
       </div>

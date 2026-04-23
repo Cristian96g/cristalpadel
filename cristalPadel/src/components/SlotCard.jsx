@@ -46,9 +46,9 @@ export default function SlotCard({
         </p>
 
         <div className="mt-2 flex items-center gap-1">
-          <span className="size-2 rounded-full bg-primary"></span>
-          <span className="text-[10px] uppercase font-bold text-primary">
-            Confirmado
+          <span className={`size-2 rounded-full ${booking.status === "pending_payment" ? "bg-amber-400" : "bg-primary"}`}></span>
+          <span className={`text-[10px] uppercase font-bold ${booking.status === "pending_payment" ? "text-amber-400" : "text-primary"}`}>
+            {booking.status === "pending_payment" ? "Pendiente" : "Confirmado"}
           </span>
         </div>
       </button>

@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BookingHeader from "../components/BookingHeader.jsx";
 import BookingHome from "../components/BookingHome.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
 import useAvailability from "../hooks/useAvailability.js";
-import { createBooking } from "../api/bookings.js";
-import SuccessCard from "../components/SuccessCard.jsx";
+import { createBooking, getBooking } from "../api/bookings.js";
+import {
+  clearPendingBooking,
+  getPendingBooking,
+  savePendingBooking,
+} from "../utils/pendingBookingStorage.js";
+import { formatDisplayDate } from "../utils/dates.js";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -15,15 +21,61 @@ function todayISO() {
   return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
 }
 
-export default function BookingPage() {
+export default function BookingPage({ activeTournament }) {
+  const navigate = useNavigate();
   const [date, setDate] = useState(todayISO());
   const { data, loading, error, refresh } = useAvailability(date);
   const [selected, setSelected] = useState(null);
-  const [successBooking, setSuccessBooking] = useState(null);
+  const [pendingBooking, setPendingBooking] = useState(() => {
+    const pending = getPendingBooking();
+    if (!pending?.expiresAt) return pending;
+    return new Date(pending.expiresAt).getTime() > Date.now() ? pending : null;
+  });
+
+  useEffect(() => {
+    async function syncPendingBooking() {
+      const pending = getPendingBooking();
+      if (!pending?.bookingId) return;
+
+      if (pending.expiresAt && new Date(pending.expiresAt).getTime() <= Date.now()) {
+        clearPendingBooking();
+        setPendingBooking(null);
+        return;
+      }
+
+      try {
+        const data = await getBooking(pending.bookingId);
+
+        if (data.booking?.status !== "pending_payment") {
+          clearPendingBooking();
+          setPendingBooking(null);
+          return;
+        }
+
+        const updated = {
+          bookingId: data.booking._id,
+          date: data.booking.date,
+          startTime: data.booking.startTime,
+          court: data.booking.court,
+          name: data.booking.name,
+          expiresAt: data.booking.expiresAt,
+        };
+
+        savePendingBooking(updated);
+        setPendingBooking(updated);
+      } catch (err) {
+        console.error("sync pending booking error:", err);
+        clearPendingBooking();
+        setPendingBooking(null);
+      }
+    }
+
+    syncPendingBooking();
+  }, []);
 
  async function handleConfirm({ name, lastName, phone }) {
   try {
-    await createBooking({
+    const response = await createBooking({
       date,
       startTime: selected.startTime,
       court: selected.court,
@@ -32,17 +84,27 @@ export default function BookingPage() {
       phone,
     });
 
-    setSuccessBooking({
-      date,
-      startTime: selected.startTime,
-      court: selected.court,
+    const booking = response.booking;
+    savePendingBooking({
+      bookingId: booking._id,
+      date: booking.date,
+      startTime: booking.startTime,
+      court: booking.court,
       name,
-      lastName,
-      phone,
+      expiresAt: booking.expiresAt,
+    });
+    setPendingBooking({
+      bookingId: booking._id,
+      date: booking.date,
+      startTime: booking.startTime,
+      court: booking.court,
+      name,
+      expiresAt: booking.expiresAt,
     });
 
     setSelected(null);
     await refresh();
+    navigate(`/reserva/${booking._id}/pendiente`);
     return { ok: true };
   } catch (e) {
     if (e.code === 409) {
@@ -56,7 +118,30 @@ export default function BookingPage() {
 
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-32">
-      <BookingHeader date={date} onChangeDate={setDate} />
+      <BookingHeader
+        date={date}
+        onChangeDate={setDate}
+        activeTournament={activeTournament}
+      />
+      {pendingBooking?.bookingId ? (
+        <div className="px-4 py-3">
+          <button
+            type="button"
+            onClick={() => navigate(`/reserva/${pendingBooking.bookingId}/pendiente`)}
+            className="w-full rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-left"
+          >
+            <p className="text-sm font-extrabold text-amber-500">
+              Tenes una reserva pendiente de confirmacion
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {formatDisplayDate(pendingBooking.date)} · {pendingBooking.startTime} · Cancha {pendingBooking.court}
+            </p>
+            <p className="mt-2 text-xs font-bold text-amber-500">
+              Toca aca para ver los pasos a seguir
+            </p>
+          </button>
+        </div>
+      ) : null}
       <BookingHome
         loading={loading}
         error={error}
@@ -69,16 +154,10 @@ export default function BookingPage() {
         onConfirm={handleConfirm}
         subtitle={
           selected
-            ? `Cancha ${selected.court} • ${date} • ${selected.startTime}`
+            ? `Cancha ${selected.court} • ${formatDisplayDate(date)} • ${selected.startTime}`
             : ""
         }
       />
-      <SuccessCard
-        open={Boolean(successBooking)}
-        booking={successBooking}
-        onClose={() => setSuccessBooking(null)}
-      />
-      
     </div>
   );
 }

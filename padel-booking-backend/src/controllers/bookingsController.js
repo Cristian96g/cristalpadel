@@ -1,6 +1,8 @@
 import Booking from "../models/Booking.js";
 import { generateStartTimes } from "../utils/slots.js";
 import { SLOT_MINUTES, OPEN_TIME, CLOSE_TIME } from "../config/schedule.js";
+import { BOOKING_PENDING_MINUTES, getBookingPaymentInfo } from "../config/bookingPayment.js";
+import { ACTIVE_BOOKING_STATUSES, expirePendingBookings, isWeekendDate } from "../utils/bookings.js";
 import { getIO } from "../socket.js";
 
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -12,7 +14,7 @@ function isPastSlot(date, startTime) {
 
 export async function createBooking(req, res) {
   try {
-    const { date, startTime, court, name, lastName, phone } = req.body;
+    const { date, startTime, court, name, lastName, phone, status } = req.body;
 
     if (!date || !startTime || !court || !name || !lastName || !phone) {
       return res.status(400).json({ message: "Missing fields" });
@@ -20,6 +22,12 @@ export async function createBooking(req, res) {
 
     if (!isValidDate(date)) {
       return res.status(400).json({ message: "Invalid date format (YYYY-MM-DD)" });
+    }
+
+    if (isWeekendDate(date)) {
+      return res.status(400).json({
+        message: "Los sabados y domingos no estan disponibles para reserva online.",
+      });
     }
 
     const courtNum = Number(court);
@@ -53,6 +61,25 @@ export async function createBooking(req, res) {
       return res.status(400).json({ message: "No se puede reservar un turno pasado" });
     }
 
+    await expirePendingBookings({ date });
+
+    const existing = await Booking.findOne({
+      date,
+      startTime,
+      court: courtNum,
+      status: { $in: ACTIVE_BOOKING_STATUSES },
+    }).lean();
+
+    if (existing) {
+      return res.status(409).json({ message: "Slot already booked" });
+    }
+
+    const requestedStatus = status === "confirmed" ? "confirmed" : "pending_payment";
+    const expiresAt =
+      requestedStatus === "pending_payment"
+        ? new Date(Date.now() + BOOKING_PENDING_MINUTES * 60 * 1000)
+        : null;
+
     const booking = await Booking.create({
       date,
       startTime,
@@ -60,7 +87,9 @@ export async function createBooking(req, res) {
       name: String(name).trim(),
       lastName: lastName ? String(lastName).trim() : "",
       phone: String(phone).trim(),
-      status: "confirmed",
+      status: requestedStatus,
+      expiresAt,
+      confirmedAt: requestedStatus === "confirmed" ? new Date() : null,
       isBlock: false,
     });
 
@@ -74,10 +103,15 @@ export async function createBooking(req, res) {
       name: booking.name,
       lastName: booking.lastName || "",
       phone: booking.phone,
+      status: booking.status,
+      expiresAt: booking.expiresAt,
       createdAt: booking.createdAt,
     });
 
-    return res.status(201).json({ booking });
+    return res.status(201).json({
+      booking,
+      payment: getBookingPaymentInfo(booking.expiresAt),
+    });
   } catch (err) {
     if (err?.code === 11000) {
       return res.status(409).json({ message: "Slot already booked" });
@@ -119,6 +153,26 @@ export async function cancelBooking(req, res) {
   }
 }
 
+export async function getBookingById(req, res) {
+  try {
+    await expirePendingBookings();
+
+    const booking = await Booking.findById(req.params.id).lean();
+
+    if (!booking) {
+      return res.status(404).json({ message: "Reserva no encontrada" });
+    }
+
+    return res.json({
+      booking,
+      payment: getBookingPaymentInfo(booking.expiresAt),
+    });
+  } catch (error) {
+    console.error("get booking by id error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 export async function getBookingsByDate(req, res) {
   try {
     const { date } = req.query;
@@ -126,6 +180,8 @@ export async function getBookingsByDate(req, res) {
     if (!date) {
       return res.status(400).json({ message: "date required" });
     }
+
+    await expirePendingBookings({ date });
 
     const bookings = await Booking.find({ date })
       .sort({ startTime: 1, court: 1 })

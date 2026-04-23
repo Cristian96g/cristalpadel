@@ -1,3 +1,5 @@
+import { formatDisplayDate } from "../utils/dates.js";
+
 export default function FixedBookingsList({ fixedBookings = [], loading = false }) {
   if (loading) {
     return <p className="px-4">Cargando turnos fijos...</p>;
@@ -38,9 +40,9 @@ export default function FixedBookingsList({ fixedBookings = [], loading = false 
             <p><strong>Días:</strong> {item.weekdayLabel}</p>
             <p><strong>Hora:</strong> {item.startTime}</p>
             <p><strong>Cancha:</strong> {item.court}</p>
-            <p><strong>Desde:</strong> {item.startDate}</p>
+            <p><strong>Desde:</strong> {formatDisplayDate(item.startDate)}</p>
             <p className="col-span-2">
-              <strong>Hasta:</strong> {item.endDate || "Sin fecha fin"}
+              <strong>Hasta:</strong> {item.endDate ? formatDisplayDate(item.endDate) : "Sin fecha fin"}
             </p>
           </div>
         </div>

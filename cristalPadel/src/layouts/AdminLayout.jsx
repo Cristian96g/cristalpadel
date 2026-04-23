@@ -34,6 +34,7 @@ export default function AdminLayout() {
     name: "",
     lastName: "",
   });
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -48,11 +49,17 @@ export default function AdminLayout() {
         });
       } catch (error) {
         console.error("admin layout user error:", error);
+        if (error.status === 401 || error.status === 403) {
+          localStorage.removeItem("token");
+          navigate("/login", { replace: true });
+        }
+      } finally {
+        setProfileLoading(false);
       }
     }
 
     loadAdminInfo();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     function handleBookingCreated(payload) {
@@ -107,9 +114,17 @@ export default function AdminLayout() {
 
   const currentNav = useMemo(() => {
     if (location.pathname.startsWith("/admin/turnos")) return "turnos";
+    if (location.pathname.startsWith("/admin/torneos")) return "torneos";
     if (location.pathname.startsWith("/admin/ajustes")) return "ajustes";
     return "reservas";
   }, [location.pathname]);
+
+  const sectionTitle = useMemo(() => {
+    if (currentNav === "turnos") return "Turnos";
+    if (currentNav === "torneos") return "Torneos";
+    if (currentNav === "ajustes") return "Ajustes";
+    return "Reservas";
+  }, [currentNav]);
 
   return (
     <div className="w-full min-h-screen overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-32">
@@ -120,6 +135,8 @@ export default function AdminLayout() {
         onNotificationClick={handleNotificationClick}
         adminName={adminInfo.name}
         adminLastName={adminInfo.lastName}
+        sectionTitle={sectionTitle}
+        profileLoading={profileLoading}
       />
 
       <Outlet />

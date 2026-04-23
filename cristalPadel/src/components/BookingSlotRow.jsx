@@ -1,8 +1,12 @@
 import SlotCard from "./SlotCard.jsx";
+import { isPastSlot } from "../utils/dates.js";
 
-export default function BookingSlotRow({ slot, onPick }) {
+export default function BookingSlotRow({ slot, onPick, date }) {
   const court1 = slot.courts.find((c) => c.court === 1);
   const court2 = slot.courts.find((c) => c.court === 2);
+  const past = isPastSlot(date, slot.startTime);
+  const court1Status = past ? "past" : court1?.status;
+  const court2Status = past ? "past" : court2?.status;
 
   return (
     <div className="flex gap-4">
@@ -13,11 +17,11 @@ export default function BookingSlotRow({ slot, onPick }) {
       </div>
 
       <SlotCard
-        status={court1?.status}
+        status={court1Status}
         booking={court1?.booking}
-        clickable={court1?.status === "available"}
+        clickable={court1Status === "available"}
         onPick={
-          court1?.status === "available"
+          court1Status === "available"
             ? () =>
                 onPick({
                   court: 1,
@@ -29,11 +33,11 @@ export default function BookingSlotRow({ slot, onPick }) {
       />
 
       <SlotCard
-        status={court2?.status}
+        status={court2Status}
         booking={court2?.booking}
-        clickable={court2?.status === "available"}
+        clickable={court2Status === "available"}
         onPick={
-          court2?.status === "available"
+          court2Status === "available"
             ? () =>
                 onPick({
                   court: 2,

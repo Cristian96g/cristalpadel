@@ -1,6 +1,7 @@
 import DaySelector from "./DaySelector";
+import { Link } from "react-router-dom";
 
-export default function BookingHeader({ date, onChangeDate }) {
+export default function BookingHeader({ date, onChangeDate, activeTournament }) {
   return (
     <header className="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800">
       
@@ -14,6 +15,18 @@ export default function BookingHeader({ date, onChangeDate }) {
             Club Padel Pro
           </h2>
         </div>
+
+        {activeTournament ? (
+          <Link
+            to="/torneo"
+            className="inline-flex items-center gap-1 rounded-2xl bg-primary px-3 py-2 text-sm font-bold text-white"
+          >
+            <span className="material-symbols-outlined text-[18px] notranslate" translate="no">
+              trophy
+            </span>
+            Torneo
+          </Link>
+        ) : null}
 
       </header>
 

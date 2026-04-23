@@ -16,3 +16,7 @@ export async function createBooking(payload) {
     throw err;
   }
 }
+
+export function getBooking(id) {
+  return apiFetch(`/api/bookings/${id}`);
+}

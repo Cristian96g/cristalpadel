@@ -3,7 +3,6 @@ import AdminSlotRow from "./AdminSlotRow.jsx";
 export default function AdminGrid({
   grid,
   loading,
-  onCancel,
   onPick,
   onOpenBooking,
   highlightedBookingId,

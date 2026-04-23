@@ -15,7 +15,9 @@ export async function apiFetch(path, options = {}) {
   let data = null;
   try {
     data = await res.json();
-  } catch {}
+  } catch {
+    // La respuesta puede no traer JSON.
+  }
 
   if (res.status === 401 || res.status === 403) {
     localStorage.removeItem("token");

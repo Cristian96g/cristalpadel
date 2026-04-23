@@ -12,6 +12,8 @@ import availabilityRouter from "./routes/availabilityRoutes.js";
 import bookingsRouter from "./routes/bookingsRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import tournamentsRouter from "./routes/tournamentsRoutes.js";
+import adminTournamentsRouter from "./routes/adminTournamentsRoutes.js";
 import { setIO } from "./socket.js";
 
 dotenv.config();
@@ -45,9 +47,11 @@ app.use(
 );
 
 app.get("/health", (req, res) => res.json({ ok: true }));
+app.use("/api/tournaments", tournamentsRouter);
 app.use("/api/fixed-bookings", fixedBookingsRouter);
 app.use("/api/availability", availabilityRouter);
 app.use("/api/bookings", bookingsRouter);
+app.use("/api/admin/tournaments", adminTournamentsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/auth", authRoutes);
 

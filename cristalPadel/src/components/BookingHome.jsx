@@ -17,6 +17,24 @@ export default function BookingHome({ loading, error, data, onPick }) {
     );
   }
 
+  if (data?.closed) {
+    return (
+      <main className="px-4 pb-24 max-w-2xl mx-auto">
+        <div className="rounded-[28px] border border-slate-800 bg-slate-900 p-5 text-center">
+          <span className="material-symbols-outlined text-primary text-4xl notranslate" translate="no">
+            event_busy
+          </span>
+          <h2 className="mt-3 text-xl font-extrabold text-white">
+            No hay reservas online
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">
+            {data.message || "Este dia no esta disponible para reserva online."}
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   if (!data || !data.slots?.length) {
     return (
       <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
@@ -48,6 +66,7 @@ export default function BookingHome({ loading, error, data, onPick }) {
           <BookingSlotRow
             key={slot.startTime}
             slot={slot}
+            date={data.date}
             onPick={onPick}
           />
         ))}

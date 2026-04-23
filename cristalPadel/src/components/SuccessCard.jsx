@@ -1,5 +1,6 @@
 import DownloadReceiptPdfButton from "./DownloadReceiptPdfButton.jsx";
 import CopyBookingButton from "./CopyBookingButton.jsx";
+import { formatDisplayDate } from "../utils/dates.js";
 
 export default function SuccessCard({ open, booking, onClose }) {
   if (!open || !booking) return null;
@@ -27,7 +28,7 @@ export default function SuccessCard({ open, booking, onClose }) {
         {/* Info */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-2 text-sm">
           <p><strong>Cancha:</strong> {booking.court}</p>
-          <p><strong>Fecha:</strong> {booking.date}</p>
+          <p><strong>Fecha:</strong> {formatDisplayDate(booking.date)}</p>
           <p><strong>Hora:</strong> {booking.startTime}</p>
           <p><strong>Nombre:</strong> {booking.name} {booking.lastName}</p>
         </div>

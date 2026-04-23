@@ -12,10 +12,13 @@ const BookingSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["confirmed", "cancelled"],
+      enum: ["pending_payment", "confirmed", "cancelled", "expired"],
       default: "confirmed",
       required: true,
     },
+
+    expiresAt: { type: Date, default: null },
+    confirmedAt: { type: Date, default: null },
 
     isBlock: { type: Boolean, default: false },
 
@@ -32,7 +35,8 @@ const BookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Solo evita duplicados entre reservas confirmadas
+// Mantiene compatibilidad con el indice existente. Las pendientes vigentes se
+// bloquean en la logica de create/availability para evitar migraciones de indice.
 BookingSchema.index(
   { date: 1, startTime: 1, court: 1 },
   {

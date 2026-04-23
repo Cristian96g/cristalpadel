@@ -1,9 +1,11 @@
+import { formatDisplayDate } from "../utils/dates.js";
+
 export default function CopyBookingButton({ booking }) {
   async function handleCopy() {
     const text = [
       "Cristal Pádel",
       `Cancha ${booking.court}`,
-      `Fecha: ${booking.date}`,
+      `Fecha: ${formatDisplayDate(booking.date)}`,
       `Hora: ${booking.startTime}`,
       `Nombre: ${booking.name} ${booking.lastName || ""}`.trim(),
     ].join("\n");
